@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl = b.dependency("sdl", .{});
+    const sdl = @import("sdl");
     exe.addModule("sdl", sdl.module("sdl"));
 
     b.installArtifact(exe);
