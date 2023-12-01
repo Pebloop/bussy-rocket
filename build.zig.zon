@@ -1,0 +1,17 @@
+.{
+    .name = "bussy-rocket",
+    .version = "0.0.0",
+    .dependencies = .{
+        .sdl = .{
+            .url = "https://github.com/MasterQ32/SDL.zig/archive/80e7409e21ebbf0bd182b34b6e0206cc26e5ca05.tar.gz",
+            .hash = "12201d21c5233abc66fe8b8bda9cdccb3e2dde73ffe791db15d743d4e04526bbabe7",
+        }
+    },
+    .paths = .{
+        "LICENSE",
+        "README.md",
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
