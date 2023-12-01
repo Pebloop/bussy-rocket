@@ -1,9 +1,13 @@
 const std = @import("std");
+const Sdk = @import("sdl");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
 
     const optimize = b.standardOptimizeOption(.{});
+    //
+    // Create a new instance of the SDL2 Sdk
+    const sdk = Sdk.init(b, null);
 
     const exe = b.addExecutable(.{
         .name = "example",
@@ -12,8 +16,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl = @import("sdl");
-    exe.addModule("sdl", sdl.module("sdl"));
+    sdk.link(exe, .dynamic);
+
+    exe.addModule("sdl2", sdk.getWrapperModule());
 
     b.installArtifact(exe);
 
