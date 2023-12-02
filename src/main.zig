@@ -1,12 +1,15 @@
 const std = @import("std");
 const SDL = @import("sdl2");
 const game_data = @import("game_data.zig");
-const gamestate_menu = @import("gamestates/gamestate_menu.zig").gamestate_menu;
-const gamestate_game = @import("gamestates/gamestate_game.zig").gamestate_game;
+const ecs = @import("ecs.zig");
 const cm2d = @cImport({
     @cInclude("chipmunk/chipmunk.h");
 });
-const ecs = @import("ecs.zig");
+
+const gamestate_menu = @import("gamestates/gamestate_menu.zig");
+
+// const gamestate_menu = @import("gamestates/gamestate_menu.zig").gamestate_menu;
+// const gamestate_game = @import("gamestates/gamestate_game.zig").gamestate_game;
 
 // pub fn main() !void {
 //     // cpVect is a 2D vector and cpv() is a shortcut for initializing them.
@@ -89,7 +92,11 @@ pub fn main() !void {
     defer renderer.destroy();
 
     const img = @embedFile("assets/bus.png");
-    const texture = try SDL.image.loadTextureMem(renderer, img[0..], SDL.image.ImgFormat.png);
+    const texture = try SDL.image.loadTextureMem(
+        renderer,
+        img[0..],
+        SDL.image.ImgFormat.png,
+    );
     defer texture.destroy();
 
     var pressing_left = false;
@@ -100,9 +107,16 @@ pub fn main() !void {
     var bus_posx: i32 = 0;
     var bus_posy: i32 = 0;
 
-    var gamedata = game_data.GameData{ .state = gamestate_menu, .renderer = &renderer };
+    var gamestate_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var menu_state: *gamestate_menu.MenuState = try gamestate_menu.MenuState.init(gamestate_allocator.allocator());
+    var gamedata = game_data.GameData{
+        .state = menu_state.state(),
+        .renderer = &renderer,
+    };
 
     mainLoop: while (true) {
+        var egg: ?game_data.Trans = null;
+
         while (SDL.pollEvent()) |ev| {
             switch (ev) {
                 .quit => break :mainLoop,
@@ -113,7 +127,10 @@ pub fn main() !void {
                         .right => pressing_right = true,
                         .up => pressing_up = true,
                         .down => pressing_down = true,
-                        else => std.debug.print("Pressed key: {}\n", .{key.scancode}),
+                        else => std.debug.print(
+                            "Pressed key: {}\n",
+                            .{key.scancode},
+                        ),
                     }
                 },
                 .key_up => |key| {
@@ -122,13 +139,24 @@ pub fn main() !void {
                         .right => pressing_right = false,
                         .up => pressing_up = false,
                         .down => pressing_down = false,
-                        else => std.debug.print("Released key: {}\n", .{key.scancode}),
+                        else => std.debug.print(
+                            "Released key: {}\n",
+                            .{key.scancode},
+                        ),
                     }
                 },
                 else => {},
             }
-            _ = gamedata.state.on_event(&gamedata, ev);
+            egg = gamedata.state.onEvent(ev);
         }
+
+        if (egg) |trans| switch (trans) {
+            game_data.Trans.to => |new_state| {
+                defer gamedata.state.deinit();
+                gamedata.state = new_state;
+            },
+            else => {},
+        };
 
         bus_posx += if (pressing_right) 1 else 0;
         bus_posx -= if (pressing_left) 1 else 0;
@@ -137,11 +165,27 @@ pub fn main() !void {
 
         try renderer.setColorRGB(0xF7, 0xA4, 0x1D);
         try renderer.clear();
-        try renderer.copy(texture, .{ .x = bus_posx, .y = bus_posy, .height = 100, .width = 100 }, null);
+        try renderer.copy(texture, .{
+            .x = bus_posx,
+            .y = bus_posy,
+            .height = 100,
+            .width = 100,
+        }, null);
 
-        _ = gamedata.state.run(&gamedata);
+        egg = gamedata.state.update();
+
+        gamedata.state.draw(&renderer);
 
         renderer.present();
+
+        if (egg) |trans| switch (trans) {
+            game_data.Trans.to => |new_state| {
+                defer gamedata.state.deinit();
+                gamedata.state = new_state;
+            },
+            else => {},
+        };
+
         SDL.delay(10);
     }
 }
