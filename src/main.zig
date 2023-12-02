@@ -28,7 +28,11 @@ pub fn main() !void {
     defer renderer.destroy();
 
     const img = @embedFile("assets/bus.png");
-    const texture = try SDL.image.loadTextureMem(renderer, img[0..], SDL.image.ImgFormat.png);
+    const texture = try SDL.image.loadTextureMem(
+        renderer,
+        img[0..],
+        SDL.image.ImgFormat.png,
+    );
     defer texture.destroy();
 
     var pressing_left = false;
@@ -39,7 +43,10 @@ pub fn main() !void {
     var bus_posx: i32 = 0;
     var bus_posy: i32 = 0;
 
-    var gamedata = game_data.GameData{ .state = gamestate_menu, .renderer = &renderer };
+    var gamedata = game_data.GameData{
+        .state = gamestate_menu,
+        .renderer = &renderer,
+    };
 
     mainLoop: while (true) {
         while (SDL.pollEvent()) |ev| {
@@ -52,7 +59,10 @@ pub fn main() !void {
                         .right => pressing_right = true,
                         .up => pressing_up = true,
                         .down => pressing_down = true,
-                        else => std.debug.print("Pressed key: {}\n", .{key.scancode}),
+                        else => std.debug.print(
+                            "Pressed key: {}\n",
+                            .{key.scancode},
+                        ),
                     }
                 },
                 .key_up => |key| {
@@ -61,7 +71,10 @@ pub fn main() !void {
                         .right => pressing_right = false,
                         .up => pressing_up = false,
                         .down => pressing_down = false,
-                        else => std.debug.print("Released key: {}\n", .{key.scancode}),
+                        else => std.debug.print(
+                            "Released key: {}\n",
+                            .{key.scancode},
+                        ),
                     }
                 },
                 else => {},
@@ -76,7 +89,12 @@ pub fn main() !void {
 
         try renderer.setColorRGB(0xF7, 0xA4, 0x1D);
         try renderer.clear();
-        try renderer.copy(texture, .{ .x = bus_posx, .y = bus_posy, .height = 100, .width = 100 }, null);
+        try renderer.copy(texture, .{
+            .x = bus_posx,
+            .y = bus_posy,
+            .height = 100,
+            .width = 100,
+        }, null);
 
         _ = gamedata.state.run(&gamedata);
 
