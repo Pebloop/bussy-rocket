@@ -38,9 +38,30 @@ pub const GameplayState = struct {
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
-        _ = event;
-        _ = self;
-
+        switch (event) {
+            .key_down => |key| {
+                switch (key.keycode) {
+                    .left => {
+                        self.busX -= 10;
+                        return null;
+                    },
+                    .right => {
+                        self.busX += 10;
+                        return null;
+                    },
+                    .up => {
+                        self.busY -= 10;
+                        return null;
+                    },
+                    .down => {
+                        self.busY += 10;
+                        return null;
+                    },
+                    else => return null,
+                }
+            },
+            else => return null,
+        }
         return null;
     }
 
