@@ -16,9 +16,11 @@ var text_font: ?SDL.ttf.Font = null;
 var text_surface: ?SDL.Surface = null;
 var text_texture: ?SDL.Texture = null;
 
-var audio_stream: ?SDL.AudioStream = null;
+var wav: ?SDL.Wav = null;
+var done = false;
 var audio_len: usize = 0;
 var audio_pos: ?[]u8 = null;
+var audio: ?SDL.OpenAudioDeviceResult = null;
 
 fn my_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) callconv(.C) void {
     var wav_len: usize = @intCast(len);
@@ -32,9 +34,12 @@ fn my_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) callconv(.C) v
         wav_len = audio_len;
     }
 
-    SDL.mixAudioFormat(stream[0..audio_len], audio_pos.?, SDL.AudioFormat.u16, SDL.mix_maxvolume);
+    std.log.debug("{} {} {}", .{ len, audio_len, wav_len });
 
-    audio_pos = audio_pos.?[0..wav_len];
+    @memset(stream[0..wav_len], 0);
+    SDL.mixAudioFormat(stream[0..wav_len], audio_pos.?[0..wav_len], SDL.AudioFormat.s16_lsb, SDL.mix_maxvolume);
+
+    audio_pos = audio_pos.?[wav_len..];
     audio_len -= wav_len;
 
     std.log.info("audio pos : {s}", .{"test"});
@@ -105,32 +110,33 @@ pub const MenuState = struct {
             };
         }
 
-        if (audio_stream == null) {
-            audio_stream = SDL.newAudioStream(SDL.AudioFormat.u16, 1, 22050, SDL.AudioFormat.f32, 2, 48000) catch |err| {
-                std.log.err("Failed to create audio stream: {}\n", .{err});
-                return;
-            };
-
-            const wav: SDL.Wav = SDL.loadWav("src/gamestates/menu_music.wav") catch |err| {
+        if (done == false) {
+            wav = SDL.loadWav("src/gamestates/menu_music.wav") catch |err| {
                 std.log.err("Failed to load audio: {}\n", .{err});
                 return;
             };
 
-            audio_pos = wav.buffer;
-            audio_len = wav.format.buffer_size_in_frames;
-            std.log.info("test {}", .{wav.format.buffer_size_in_frames});
+            audio_pos = wav.?.buffer;
+            audio_len = wav.?.buffer.len;
+            std.log.debug("test {}", .{wav.?.format.buffer_size_in_bytes});
 
-            const audio = SDL.openAudioDevice(SDL.OpenAudioDeviceOptions{
-                .desired_spec = SDL.AudioSpecRequest{
+            audio = SDL.openAudioDevice(SDL.OpenAudioDeviceOptions{
+                .desired_spec = .{
+                    .callback = my_callback,
                     .userdata = null,
-                    .callback = &my_callback,
+                    .sample_rate = wav.?.format.sample_rate,
+                    .buffer_size_in_frames = wav.?.format.buffer_size_in_frames,
+                    .channel_count = wav.?.format.channel_count,
                 },
             }) catch |err| {
                 std.log.err("Failed to open audio device: {}\n", .{err});
                 return;
             };
 
-            audio.device.pause(false);
+            done = true;
+        }
+        if (audio) |true_audio| {
+            true_audio.device.pause(false);
         }
 
         renderer.copyEx(
