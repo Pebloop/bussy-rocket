@@ -1,5 +1,8 @@
 const std = @import("std");
 const SDL = @import("sdl2");
+const game_data = @import("game_data.zig");
+const gamestate_menu = @import("gamestates/gamestate_menu.zig").gamestate_menu;
+const gamestate_game = @import("gamestates/gamestate_game.zig").gamestate_game;
 
 pub fn main() !void {
     try SDL.init(.{
@@ -36,6 +39,8 @@ pub fn main() !void {
     var bus_posx: i32 = 0;
     var bus_posy: i32 = 0;
 
+    var gamedata = game_data.GameData{ .state = gamestate_menu, .renderer = &renderer };
+
     mainLoop: while (true) {
         while (SDL.pollEvent()) |ev| {
             switch (ev) {
@@ -61,6 +66,7 @@ pub fn main() !void {
                 },
                 else => {},
             }
+            _ = gamedata.state.on_event(&gamedata, ev);
         }
 
         bus_posx += if (pressing_right) 1 else 0;
@@ -71,6 +77,8 @@ pub fn main() !void {
         try renderer.setColorRGB(0xF7, 0xA4, 0x1D);
         try renderer.clear();
         try renderer.copy(texture, .{ .x = bus_posx, .y = bus_posy, .height = 100, .width = 100 }, null);
+
+        _ = gamedata.state.run(&gamedata);
 
         renderer.present();
         SDL.delay(10);
