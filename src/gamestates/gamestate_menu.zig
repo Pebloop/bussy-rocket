@@ -16,6 +16,30 @@ var text_font: ?SDL.ttf.Font = null;
 var text_surface: ?SDL.Surface = null;
 var text_texture: ?SDL.Texture = null;
 
+var audio_stream: ?SDL.AudioStream = null;
+var audio_len: usize = 0;
+var audio_pos: ?[]u8 = null;
+
+fn my_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) callconv(.C) void {
+    var wav_len: usize = @intCast(len);
+    _ = userdata;
+
+    if (audio_len == 0) {
+        return;
+    }
+
+    if (len > audio_len) {
+        wav_len = audio_len;
+    }
+
+    SDL.mixAudioFormat(stream[0..audio_len], audio_pos.?, SDL.AudioFormat.u16, SDL.mix_maxvolume);
+
+    audio_pos = audio_pos.?[0..wav_len];
+    audio_len -= wav_len;
+
+    std.log.info("audio pos : {s}", .{"test"});
+}
+
 pub const MenuState = struct {
     const Self = @This();
 
@@ -79,6 +103,34 @@ pub const MenuState = struct {
                 std.log.err("Failed to create texture from surface: {}\n", .{err});
                 return;
             };
+        }
+
+        if (audio_stream == null) {
+            audio_stream = SDL.newAudioStream(SDL.AudioFormat.u16, 1, 22050, SDL.AudioFormat.f32, 2, 48000) catch |err| {
+                std.log.err("Failed to create audio stream: {}\n", .{err});
+                return;
+            };
+
+            const wav: SDL.Wav = SDL.loadWav("src/gamestates/menu_music.wav") catch |err| {
+                std.log.err("Failed to load audio: {}\n", .{err});
+                return;
+            };
+
+            audio_pos = wav.buffer;
+            audio_len = wav.format.buffer_size_in_frames;
+            std.log.info("test {}", .{wav.format.buffer_size_in_frames});
+
+            const audio = SDL.openAudioDevice(SDL.OpenAudioDeviceOptions{
+                .desired_spec = SDL.AudioSpecRequest{
+                    .userdata = null,
+                    .callback = &my_callback,
+                },
+            }) catch |err| {
+                std.log.err("Failed to open audio device: {}\n", .{err});
+                return;
+            };
+
+            audio.device.pause(false);
         }
 
         renderer.copyEx(
