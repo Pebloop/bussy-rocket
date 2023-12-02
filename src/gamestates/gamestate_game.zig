@@ -1,19 +1,21 @@
 const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
-const assets = @import("../asset_manager/asset_list.zig").AssetsList;
+const assets = @import("../asset_manager/asset_list.zig");
 const Image = @import("../asset_manager/image.zig").Image;
 const Allocator = std.mem.Allocator;
 
 pub const GameplayState = struct {
     const Self = @This();
     allocator: Allocator,
-    bus_image: Image,
+    busX: i32 = 0,
+    busY: i32 = 0,
 
     pub fn init(alloc: Allocator) !*Self {
         var self = try alloc.create(Self);
         self.allocator = alloc;
-        self.bus_image = assets.images.bus;
+        self.busX = 0;
+        self.busY = 0;
         return self;
     }
 
@@ -32,7 +34,7 @@ pub const GameplayState = struct {
             @panic("Could not set color");
         };
 
-        self.bus_image.draw(renderer, 0, 0);
+        assets.assets.images.bus.draw(renderer, self.busX, self.busY);
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {

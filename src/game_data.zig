@@ -1,4 +1,5 @@
 const SDL = @import("sdl2");
+const std = @import("std");
 
 pub const Trans = union(enum) {
     to: GameState,
@@ -26,7 +27,6 @@ pub const GameState = struct {
         const gen = struct {
             pub fn updateImpl(pointer: *anyopaque) ?Trans {
                 const self = @as(Ptr, @ptrCast(@alignCast(pointer)));
-
                 return @call(
                     .always_inline,
                     ptr_info.Pointer.child.update,

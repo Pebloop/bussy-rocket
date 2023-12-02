@@ -29,8 +29,7 @@ pub fn main() !void {
     var renderer = try SDL.createRenderer(window, null, .{ .accelerated = true });
     defer renderer.destroy();
 
-    const assets = assets_manager.createAssetsList();
-    assets.loadAssets(&renderer);
+    assets_manager.assets.loadAssets(&renderer);
 
     var gamestate_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     var menu_state: *gamestate_menu.MenuState = try gamestate_menu.MenuState.init(gamestate_allocator.allocator());
@@ -52,8 +51,9 @@ pub fn main() !void {
 
         if (egg) |trans| switch (trans) {
             game_data.Trans.to => |new_state| {
-                defer gamedata.state.deinit();
+                const old_state = gamedata.state;
                 gamedata.state = new_state;
+                old_state.deinit();
             },
             else => {},
         };

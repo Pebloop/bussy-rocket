@@ -2,27 +2,21 @@ const Image = @import("./image.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
 
-const imagesList = struct {
-    pub var bus = Image.createImage(@embedFile("../assets/images/bus.png"), 200, 100);
+const ImagesList = struct {
+    bus: Image.Image = Image.createImage(@embedFile("../assets/images/bus.png"), 200, 100),
 };
 
-const fontList = struct {
-    pub var font = @embedFile("../assets/fonts/Roboto-Black.ttf");
+const FontList = struct {
+    font: [:0]const u8 = @embedFile("../assets/fonts/Roboto-Black.ttf"),
 };
 
 pub const AssetsList = struct {
-    pub const images = imagesList;
-    pub const fonts = fontList;
+    images: ImagesList = ImagesList{},
+    fonts: FontList = FontList{},
 
-    pub fn loadAssets(assets: *AssetsList, renderer: *SDL.Renderer) void {
-        assets.images.bus.load(renderer);
-        std.log.info("bus : ", .{assets.images.bus});
+    pub fn loadAssets(assetsList: *AssetsList, renderer: *SDL.Renderer) void {
+        assetsList.images.bus.load(renderer);
     }
 };
 
-pub fn createAssetsList() AssetsList {
-    return AssetsList{
-        .images = imagesList,
-        .fonts = fontList,
-    };
-}
+pub var assets: AssetsList = AssetsList{};

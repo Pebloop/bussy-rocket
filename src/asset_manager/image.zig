@@ -8,7 +8,6 @@ pub const Image = struct {
     height: c_int,
 
     pub fn load(image: *Image, renderer: *SDL.Renderer) void {
-        std.log.debug("texture : {}", .{image.texture == null});
         image.texture = SDL.image.loadTextureMem(
             renderer.*,
             image.picture[0..],
@@ -20,21 +19,19 @@ pub const Image = struct {
     }
 
     pub fn draw(image: *Image, renderer: *SDL.Renderer, x: c_int, y: c_int) void {
-        if (image.texture == null) {
-            return;
+        if (image.texture) |texture| {
+            const rect = SDL.Rectangle{
+                .x = x,
+                .y = y,
+                .width = image.width,
+                .height = image.height,
+            };
+
+            renderer.copy(texture, rect, null) catch |err| {
+                std.log.err("Failed to draw bus texture: {}", .{err});
+                return;
+            };
         }
-
-        var rect = SDL.Rectangle{
-            .x = x,
-            .y = y,
-            .width = image.width,
-            .height = image.height,
-        };
-
-        renderer.*.copy(image.texture.?, rect, null) catch |err| {
-            std.log.err("Failed to draw bus texture: {}", .{err});
-            return;
-        };
     }
 };
 
