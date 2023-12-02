@@ -2,6 +2,7 @@ const std = @import("std");
 const SDL = @import("sdl2");
 const game_data = @import("game_data.zig");
 const gamestate_menu = @import("gamestates/gamestate_menu.zig");
+const assets_manager = @import("./asset_manager/asset_list.zig");
 
 pub fn main() !void {
     try SDL.init(.{
@@ -13,6 +14,7 @@ pub fn main() !void {
     try SDL.image.init(.{ .png = true });
     try SDL.ttf.init();
     defer SDL.image.quit();
+    defer SDL.ttf.quit();
 
     var window = try SDL.createWindow(
         "Bussy Rocket",
@@ -26,6 +28,9 @@ pub fn main() !void {
 
     var renderer = try SDL.createRenderer(window, null, .{ .accelerated = true });
     defer renderer.destroy();
+
+    const assets = assets_manager.createAssetsList();
+    assets.loadAssets(&renderer);
 
     var gamestate_allocator = std.heap.GeneralPurposeAllocator(.{}){};
     var menu_state: *gamestate_menu.MenuState = try gamestate_menu.MenuState.init(gamestate_allocator.allocator());
