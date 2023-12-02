@@ -2,6 +2,7 @@ const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
 const gamestate_game = @import("./gamestate_game.zig");
+const Allocator = std.mem.Allocator;
 
 const bus_asset = @embedFile("../assets/images/bus.png");
 var bus_texture: ?SDL.Texture = null;
@@ -18,9 +19,12 @@ var text_texture: ?SDL.Texture = null;
 
 pub const MenuState = struct {
     const Self = @This();
+    allocator: Allocator,
 
-    pub fn init() Self {
-        return Self{};
+    pub fn init(alloc: Allocator) !*Self {
+        var self = try alloc.create(Self);
+        self.allocator = alloc;
+        return self;
     }
 
     pub fn state(self: *Self) game_data.GameState {
@@ -128,9 +132,7 @@ pub const MenuState = struct {
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
-        _ = self;
-
-        var next_state = gamestate_game.GameplayState.init();
+        var next_state = gamestate_game.GameplayState.init(self.allocator) catch @panic("Allocation failed!");
 
         return switch (event) {
             .key_down => game_data.Trans{
@@ -138,5 +140,9 @@ pub const MenuState = struct {
             },
             else => null,
         };
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.allocator.destroy(self);
     }
 };

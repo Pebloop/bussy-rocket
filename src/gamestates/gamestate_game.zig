@@ -1,12 +1,16 @@
 const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 
 pub const GameplayState = struct {
     const Self = @This();
+    allocator: Allocator,
 
-    pub fn init() Self {
-        return Self{};
+    pub fn init(alloc: Allocator) !*Self {
+        var self = try alloc.create(Self);
+        self.allocator = alloc;
+        return self;
     }
 
     pub fn state(self: *Self) game_data.GameState {
@@ -40,5 +44,9 @@ pub const GameplayState = struct {
         _ = self;
 
         return null;
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.allocator.destroy(self);
     }
 };
