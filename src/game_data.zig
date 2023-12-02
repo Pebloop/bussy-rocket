@@ -14,6 +14,7 @@ pub const GameState = struct {
     updateFn: *const fn (*anyopaque) ?Trans,
     drawFn: *const fn (*anyopaque, renderer: *SDL.Renderer) void,
     onEventFn: *const fn (*anyopaque, SDL.Event) ?Trans,
+    deinitFn: *const fn (*anyopaque) void,
 
     pub fn init(ptr: anytype) Self {
         const Ptr = @TypeOf(ptr);
@@ -52,6 +53,16 @@ pub const GameState = struct {
                     .{ self, event },
                 );
             }
+
+            pub fn deinitImpl(pointer: *anyopaque) void {
+                const self = @as(Ptr, @ptrCast(@alignCast(pointer)));
+
+                return @call(
+                    .always_inline,
+                    ptr_info.Pointer.child.deinit,
+                    .{self},
+                );
+            }
         };
 
         return .{
@@ -59,6 +70,7 @@ pub const GameState = struct {
             .updateFn = gen.updateImpl,
             .drawFn = gen.drawImpl,
             .onEventFn = gen.onEventImpl,
+            .deinitFn = gen.deinitImpl,
         };
     }
 
@@ -72,6 +84,10 @@ pub const GameState = struct {
 
     pub inline fn onEvent(self: Self, event: SDL.Event) ?Trans {
         return self.onEventFn(self.ptr, event);
+    }
+
+    pub inline fn deinit(self: Self) void {
+        return self.deinitFn(self.ptr);
     }
 };
 

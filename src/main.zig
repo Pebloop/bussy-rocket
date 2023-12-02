@@ -42,7 +42,8 @@ pub fn main() !void {
     var bus_posx: i32 = 0;
     var bus_posy: i32 = 0;
 
-    var menu_state: gamestate_menu.MenuState = gamestate_menu.MenuState.init();
+    var gamestate_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    var menu_state: *gamestate_menu.MenuState = try gamestate_menu.MenuState.init(gamestate_allocator.allocator());
     var gamedata = game_data.GameData{
         .state = menu_state.state(),
         .renderer = &renderer,
@@ -86,6 +87,7 @@ pub fn main() !void {
 
         if (egg) |trans| switch (trans) {
             game_data.Trans.to => |new_state| {
+                defer gamedata.state.deinit();
                 gamedata.state = new_state;
             },
             else => {},
@@ -113,6 +115,7 @@ pub fn main() !void {
 
         if (egg) |trans| switch (trans) {
             game_data.Trans.to => |new_state| {
+                defer gamedata.state.deinit();
                 gamedata.state = new_state;
             },
             else => {},
