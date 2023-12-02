@@ -1,8 +1,7 @@
 const std = @import("std");
 const SDL = @import("sdl2");
 const game_data = @import("game_data.zig");
-const gamestate_menu = @import("gamestates/gamestate_menu.zig").gamestate_menu;
-const gamestate_game = @import("gamestates/gamestate_game.zig").gamestate_game;
+const gamestate_menu = @import("gamestates/gamestate_menu.zig");
 
 pub fn main() !void {
     try SDL.init(.{
@@ -43,12 +42,15 @@ pub fn main() !void {
     var bus_posx: i32 = 0;
     var bus_posy: i32 = 0;
 
+    var menu_state: gamestate_menu.MenuState = gamestate_menu.MenuState.init();
     var gamedata = game_data.GameData{
-        .state = gamestate_menu,
+        .state = menu_state.state(),
         .renderer = &renderer,
     };
 
     mainLoop: while (true) {
+        var egg: ?game_data.Trans = null;
+
         while (SDL.pollEvent()) |ev| {
             switch (ev) {
                 .quit => break :mainLoop,
@@ -79,8 +81,15 @@ pub fn main() !void {
                 },
                 else => {},
             }
-            _ = gamedata.state.on_event(&gamedata, ev);
+            egg = gamedata.state.onEvent(ev);
         }
+
+        if (egg) |trans| switch (trans) {
+            game_data.Trans.to => |new_state| {
+                gamedata.state = new_state;
+            },
+            else => {},
+        };
 
         bus_posx += if (pressing_right) 1 else 0;
         bus_posx -= if (pressing_left) 1 else 0;
@@ -96,9 +105,19 @@ pub fn main() !void {
             .width = 100,
         }, null);
 
-        _ = gamedata.state.run(&gamedata);
+        egg = gamedata.state.update();
+
+        gamedata.state.draw(&renderer);
 
         renderer.present();
+
+        if (egg) |trans| switch (trans) {
+            game_data.Trans.to => |new_state| {
+                gamedata.state = new_state;
+            },
+            else => {},
+        };
+
         SDL.delay(10);
     }
 }

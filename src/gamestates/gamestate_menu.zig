@@ -1,34 +1,51 @@
 const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
-const gamestate_game = @import("./gamestate_game.zig").gamestate_game;
+const gamestate_game = @import("./gamestate_game.zig");
 
-fn gamestate_menu_run(gamedata: *game_data.GameData) *game_data.GameData {
-    gamedata.renderer.setColorRGB(0x84, 0x5E, 0xC2) catch |err| {
-        std.log.err("Could not set color : {}", .{err});
-        return gamedata;
-    };
-    gamedata.renderer.drawRect(SDL.Rectangle{
-        .x = 0,
-        .y = 0,
-        .width = 30,
-        .height = 30,
-    }) catch |err| {
-        std.log.err("Could not display rectangle : {}", .{err});
-        return gamedata;
-    };
-    return gamedata;
-}
+pub const MenuState = struct {
+    const Self = @This();
 
-fn gamestate_menu_onevent(gamedata: *game_data.GameData, event: SDL.Event) *game_data.GameData {
-    switch (event) {
-        .key_down => gamedata.state = gamestate_game,
-        else => {},
+    pub fn init() Self {
+        return Self{};
     }
-    return gamedata;
-}
 
-pub const gamestate_menu = game_data.GameState{
-    .run = &gamestate_menu_run,
-    .on_event = &gamestate_menu_onevent,
+    pub fn state(self: *Self) game_data.GameState {
+        return game_data.GameState.init(self);
+    }
+
+    pub fn update(self: *Self) ?game_data.Trans {
+        _ = self;
+        return null;
+    }
+
+    pub fn draw(self: *Self, renderer: *SDL.Renderer) void {
+        _ = self;
+        renderer.setColorRGB(0x84, 0x5E, 0xC2) catch |err| {
+            std.log.err("Could not set color: {}", .{err});
+            @panic("Could not set color");
+        };
+        renderer.drawRect(SDL.Rectangle{
+            .x = 0,
+            .y = 0,
+            .width = 30,
+            .height = 30,
+        }) catch |err| {
+            std.log.err("Could not display rectangle: {}", .{err});
+            @panic("Could not display rectangle");
+        };
+    }
+
+    pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
+        _ = self;
+
+        var next_state = gamestate_game.GameplayState.init();
+
+        return switch (event) {
+            .key_down => game_data.Trans{
+                .to = next_state.state(),
+            },
+            else => null,
+        };
+    }
 };
