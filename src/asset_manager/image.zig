@@ -19,6 +19,10 @@ pub const Image = struct {
     }
 
     pub fn draw(image: *Image, renderer: *SDL.Renderer, x: c_int, y: c_int) void {
+        image.drawExt(renderer, x, y, 0);
+    }
+
+    pub fn drawExt(image: *Image, renderer: *SDL.Renderer, x: c_int, y: c_int, r: f32) void {
         if (image.texture) |texture| {
             const rect = SDL.Rectangle{
                 .x = x,
@@ -27,8 +31,15 @@ pub const Image = struct {
                 .height = image.height,
             };
 
-            renderer.copy(texture, rect, null) catch |err| {
-                std.log.err("Failed to draw bus texture: {}", .{err});
+            renderer.copyEx(
+                texture,
+                rect,
+                null,
+                -std.math.radiansToDegrees(f64, @as(f64, @floatCast(r))),
+                null,
+                SDL.RendererFlip.none,
+            ) catch |err| {
+                std.log.err("Failed to draw image: {}", .{err});
                 return;
             };
         }
