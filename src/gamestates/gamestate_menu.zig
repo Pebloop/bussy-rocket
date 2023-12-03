@@ -111,7 +111,7 @@ pub const MenuState = struct {
         renderer.copyEx(
             bus_texture.?,
             SDL.Rectangle{
-                .x = 540 - 100,
+                .x = 440,
                 .y = 340,
                 .width = 200,
                 .height = 100,
@@ -125,7 +125,7 @@ pub const MenuState = struct {
             return;
         };
 
-        renderer.*.copy(
+        renderer.copy(
             title_texture.?,
             SDL.Rectangle{
                 .x = 130,
@@ -139,7 +139,7 @@ pub const MenuState = struct {
             return;
         };
 
-        renderer.*.copy(
+        renderer.copy(
             text_texture.?,
             SDL.Rectangle{
                 .x = 300,
@@ -155,11 +155,13 @@ pub const MenuState = struct {
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
-        var next_state = gamestate_game.GameplayState.init(self.allocator) catch @panic("Allocation failed!");
-
         return switch (event) {
-            .key_down => game_data.Trans{
-                .to = next_state.state(),
+            .key_down => {
+                var next_state = gamestate_game.GameplayState.init(self.allocator) catch @panic("Allocation failed!");
+
+                return game_data.Trans{
+                    .to = next_state.state(),
+                };
             },
             else => null,
         };
