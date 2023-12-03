@@ -101,6 +101,7 @@ pub const GameplayState = struct {
     bus: Bus,
     camera_elevation: f32 = 0,
     elevation_speed: f32 = 0.01,
+    score: u32 = 0,
 
     pub fn init(alloc: Allocator) !*Self {
         const self = try alloc.create(Self);
@@ -112,6 +113,7 @@ pub const GameplayState = struct {
         self.bus = Bus.init(alloc);
         self.camera_elevation = 0;
         self.elevation_speed = 0;
+        self.score = 0;
 
         return self;
     }
@@ -133,6 +135,7 @@ pub const GameplayState = struct {
             self.camera_elevation += self.elevation_speed * @as(f32, @floatCast(delta));
             self.elevation_speed += 0.01;
         }
+        self.score = @max(self.score, @as(u32, @intFromFloat(self.bus.getHeight())));
 
         self.bus.update(delta);
         physics.update(delta);
@@ -142,7 +145,7 @@ pub const GameplayState = struct {
     pub fn draw(self: *Self, renderer: *SDL.Renderer) void {
         // draw score
         var height_text = [10:0]u8{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
-        _ = std.fmt.bufPrint(&height_text, "{}", .{@as(i64, @intFromFloat(self.camera_elevation))}) catch |err| {
+        _ = std.fmt.bufPrint(&height_text, "{}", .{self.score}) catch |err| {
             std.log.err("Could not format height: {}", .{err});
             @panic("Could not format height");
         };
