@@ -2,6 +2,7 @@ const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
 const gamestate_game = @import("./gamestate_game.zig");
+const sound = @import("../sound.zig");
 
 const bus_asset = @embedFile("../assets/images/bus.png");
 var bus_texture: ?SDL.Texture = null;
@@ -22,28 +23,8 @@ var audio_len: usize = 0;
 var audio_pos: ?[]u8 = null;
 var audio: ?SDL.OpenAudioDeviceResult = null;
 
-fn my_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) callconv(.C) void {
-    var wav_len: usize = @intCast(len);
-    _ = userdata;
-
-    if (audio_len == 0) {
-        return;
-    }
-
-    if (len > audio_len) {
-        wav_len = audio_len;
-    }
-
-    std.log.debug("{} {} {}", .{ len, audio_len, wav_len });
-
-    @memset(stream[0..wav_len], 0);
-    SDL.mixAudioFormat(stream[0..wav_len], audio_pos.?[0..wav_len], SDL.AudioFormat.s16_lsb, SDL.mix_maxvolume);
-
-    audio_pos = audio_pos.?[wav_len..];
-    audio_len -= wav_len;
-
-    std.log.info("audio pos : {s}", .{"test"});
-}
+var sound_engine: ?*sound.sound_manager = null;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub const MenuState = struct {
     const Self = @This();
@@ -110,30 +91,14 @@ pub const MenuState = struct {
             };
         }
 
-        if (done == false) {
-            wav = SDL.loadWav("src/gamestates/menu_music.wav") catch |err| {
-                std.log.err("Failed to load audio: {}\n", .{err});
-                return;
-            };
-
-            audio_pos = wav.?.buffer;
-            audio_len = wav.?.buffer.len;
-            std.log.debug("test {}", .{wav.?.format.buffer_size_in_bytes});
-
-            audio = SDL.openAudioDevice(SDL.OpenAudioDeviceOptions{
-                .desired_spec = .{
-                    .callback = my_callback,
-                    .userdata = null,
-                    .sample_rate = wav.?.format.sample_rate,
-                    .buffer_size_in_frames = wav.?.format.buffer_size_in_frames,
-                    .channel_count = wav.?.format.channel_count,
-                },
-            }) catch |err| {
-                std.log.err("Failed to open audio device: {}\n", .{err});
-                return;
-            };
-
-            done = true;
+        if (sound_engine == null) {
+            sound_engine = sound.sound_manager.init(gpa.allocator()) catch @panic("Sound engine could not init");
+            sound_engine.?.start();
+            const bg = sound_engine.?.loadSound("src/gamestates/menu_music.wav") catch @panic("Could not load sound");
+            bg.play();
+            const crickets = sound_engine.?.loadSound("src/gamestates/crickets.wav") catch @panic("Could not load crickets");
+            crickets.loop = true;
+            crickets.play();
         }
         if (audio) |true_audio| {
             true_audio.device.pause(false);
