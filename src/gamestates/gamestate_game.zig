@@ -10,6 +10,7 @@ const root = @import("root");
 const Allocator = std.mem.Allocator;
 
 const physics_to_pixels_ratio = 100.0; // 100 px = 1 physics engine unit
+const camera_follows_bus = true;
 
 const Bus = struct {
     const Self = @This();
@@ -36,6 +37,10 @@ const Bus = struct {
 
     pub fn deinit(self: Self) void {
         self.rigid_body.deinit();
+    }
+
+    pub fn getHeight(self: *Self) f32 {
+        return @floatCast(self.rigid_body.getPosition().y);
     }
 
     pub fn update(self: *Self, delta: f64) void {
@@ -122,8 +127,13 @@ pub const GameplayState = struct {
     }
 
     pub fn update(self: *Self, delta: f64) ?game_data.Trans {
-        self.camera_elevation += self.elevation_speed * @as(f32, @floatCast(delta));
-        self.elevation_speed += 0.01;
+        if (camera_follows_bus) {
+            self.camera_elevation = @max(0, self.bus.getHeight() * physics_to_pixels_ratio - root.height / 2);
+        } else {
+            self.camera_elevation += self.elevation_speed * @as(f32, @floatCast(delta));
+            self.elevation_speed += 0.01;
+        }
+
         self.bus.update(delta);
         physics.update(delta);
         return null;
