@@ -26,6 +26,7 @@ pub const GameOverState = struct {
 
     pub fn draw(self: *Self, renderer: *SDL.Renderer) void {
         _ = self;
+        assets.assets.images.bus_broken.draw(renderer, 150, 300);
         assets.assets.fonts.font.draw(28, 400, 140, 310, 100, "GameOver", renderer);
     }
 

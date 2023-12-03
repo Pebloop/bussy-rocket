@@ -5,6 +5,7 @@ const std = @import("std");
 
 const ImagesList = struct {
     bus: Image.Image = Image.createImage(@embedFile("../assets/images/bus.png"), 200, 100),
+    bus_broken: Image.Image = Image.createImage(@embedFile("../assets/images/bus_broken.png"), 700, 350),
 };
 
 const FontList = struct {
@@ -17,6 +18,7 @@ pub const AssetsList = struct {
 
     pub fn loadAssets(assetsList: *AssetsList, renderer: *SDL.Renderer) void {
         assetsList.images.bus.load(renderer);
+        assetsList.images.bus_broken.load(renderer);
     }
 };
 
