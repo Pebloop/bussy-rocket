@@ -151,8 +151,23 @@ pub const Body = struct {
         c.cpBodyFree(self.ptr);
     }
 
+    pub fn collides(self: *Self, other: *Self) bool {
+        for (self.shapes.shapes.items) |shape| {
+            for (other.shapes.shapes.items) |other_shape| {
+                const contacts = c.cpShapesCollide(shape, other_shape);
+
+                if (contacts.count != 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     pub fn setPosition(self: *Self, x: f32, y: f32) void {
         c.cpBodySetPosition(self.ptr, c.cpv(x, y));
+        c.cpSpaceReindexShapesForBody(space, self.ptr);
     }
 
     pub fn getPosition(self: *Self) c.cpVect {

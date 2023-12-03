@@ -21,16 +21,16 @@ const Bus = struct {
 
     pub fn init(allocator: Allocator) Self {
         var self = Self{
-            .rigid_body = physics.Body.initRigid(allocator, 1, 5),
+            .rigid_body = physics.Body.initRigid(allocator, 1, 2),
         };
 
         self.rigid_body.shapes.addBox(
-            (200.0 / physics_to_pixels_ratio),
+            (180.0 / physics_to_pixels_ratio),
             (100.0 / physics_to_pixels_ratio),
             0,
         ).setFriction(1);
 
-        self.rigid_body.setPosition(0, 5);
+        self.rigid_body.setPosition(0, 2);
 
         return self;
     }
@@ -47,11 +47,21 @@ const Bus = struct {
         _ = delta;
 
         if (self.left_booster) {
-            self.rigid_body.applyForceAt(0, 10, -1.5, 0);
+            self.rigid_body.applyForceAt(
+                0,
+                10,
+                -80.0 / physics_to_pixels_ratio,
+                50.0 / physics_to_pixels_ratio,
+            );
         }
 
         if (self.right_booster) {
-            self.rigid_body.applyForceAt(0, 10, 1.5, 0);
+            self.rigid_body.applyForceAt(
+                0,
+                10,
+                80.0 / physics_to_pixels_ratio,
+                50.0 / physics_to_pixels_ratio,
+            );
         }
     }
 
@@ -86,6 +96,9 @@ const Ground = struct {
             0,
         ).setFriction(1);
 
+        self.static_body.shapes.addSegment(-5, 0, -5, 1000, 0).setFriction(1);
+        self.static_body.shapes.addSegment(5, 0, 5, 1000, 0).setFriction(1);
+
         return self;
     }
 
@@ -105,8 +118,8 @@ pub const Choco = struct {
         };
 
         _ = self.static_body.shapes.addBox(
-            64.0 / physics_to_pixels_ratio,
-            64.0 / physics_to_pixels_ratio,
+            48.0 / physics_to_pixels_ratio,
+            44.0 / physics_to_pixels_ratio,
             0.0,
         );
 
@@ -121,11 +134,13 @@ pub const Choco = struct {
 
     pub fn draw(self: *Self, renderer: *SDL.Renderer, camx: f32, camy: f32) void {
         const pos = self.static_body.getPosition();
+        const angle = self.static_body.getAngle();
 
-        assets.assets.images.choco.draw(
+        assets.assets.images.choco.drawExt(
             renderer,
             @intFromFloat(root.width / 2 - camx + pos.x * physics_to_pixels_ratio - 32),
             @intFromFloat(root.height - camy - pos.y * physics_to_pixels_ratio - 32),
+            angle,
         );
     }
 };
@@ -152,7 +167,7 @@ pub const GameplayState = struct {
         self.ground = Ground.init(alloc);
         self.bus = Bus.init(alloc);
         self.chocos = std.ArrayList(Choco).init(alloc);
-        self.generated_choco_altitude = 0;
+        self.generated_choco_altitude = 3;
         self.camera_elevation = 0;
         self.elevation_speed = 0;
         self.score = 0;
@@ -182,12 +197,12 @@ pub const GameplayState = struct {
 
         if (min_generated_choco_altitude > self.generated_choco_altitude) {
             const delta_alt = min_generated_choco_altitude - self.generated_choco_altitude;
-            const choco_count: u64 = @intFromFloat(delta_alt / 5);
+            const choco_count: u64 = @intFromFloat(delta_alt / 2);
 
             if (choco_count > 0) {
-                for (0..choco_count) |_| {
-                    const x = self.rand.random().float(f32) * 6 - 3;
-                    const y = self.rand.random().float(f32) * delta_alt + self.generated_choco_altitude;
+                for (0..choco_count) |i| {
+                    const x = self.rand.random().float(f32) * 10 - 5;
+                    const y = (@as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(choco_count))) * delta_alt + self.generated_choco_altitude;
                     const choco = Choco.init(self.allocator, x, y);
 
                     std.log.debug("created choco at ({}, {})", .{ x, y });
@@ -209,6 +224,19 @@ pub const GameplayState = struct {
 
         self.bus.update(delta);
         physics.update(delta);
+
+        {
+            var i = self.chocos.items.len;
+
+            while (i != 0) {
+                if (self.chocos.items[i - 1].static_body.collides(&self.bus.rigid_body)) {
+                    self.chocos.pop().deinit();
+                } else {
+                    i -= 1;
+                }
+            }
+        }
+
         return null;
     }
 
