@@ -3,7 +3,7 @@ const std = @import("std");
 
 // SDL.mixAudioFormat(stream[0..wav_len], audio_pos.?[0..wav_len], SDL.AudioFormat.s16_lsb, SDL.mix_maxvolume);
 fn global_audio_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) callconv(.C) void {
-    const engine: *sound_manager = @ptrCast(@alignCast(userdata.?));
+    const engine: *SoundManager = @ptrCast(@alignCast(userdata.?));
     const output_buffer_size: usize = @intCast(len);
     @memset(stream[0..output_buffer_size], 0);
 
@@ -31,7 +31,7 @@ fn global_audio_callback(userdata: ?*anyopaque, stream: [*c]u8, len: c_int) call
     }
 }
 
-pub const wav = struct {
+pub const Wav = struct {
     const Self = @This();
     data: SDL.Wav,
     current_pos: []u8,
@@ -46,16 +46,16 @@ pub const wav = struct {
     }
 };
 
-pub const sound_manager = struct {
+pub const SoundManager = struct {
     const Self = @This();
-    sound_list: std.ArrayList(*wav),
+    sound_list: std.ArrayList(*Wav),
     allocator: std.mem.Allocator,
     audio_device: SDL.OpenAudioDeviceResult,
 
     pub fn init(alloc: std.mem.Allocator) !*Self {
         var self = try alloc.create(Self);
         self.allocator = alloc;
-        self.sound_list = std.ArrayList(*wav).init(alloc);
+        self.sound_list = std.ArrayList(*Wav).init(alloc);
         self.audio_device = try SDL.openAudioDevice(SDL.OpenAudioDeviceOptions{
             .desired_spec = .{
                 .callback = global_audio_callback,
@@ -68,8 +68,8 @@ pub const sound_manager = struct {
         return self;
     }
 
-    pub fn loadSound(self: *Self, path: [:0]const u8) !*wav {
-        var sound = try self.allocator.create(wav);
+    pub fn loadSound(self: *Self, path: [:0]const u8) !*Wav {
+        var sound = try self.allocator.create(Wav);
         sound.data = try SDL.loadWav(path);
         sound.current_pos = sound.data.buffer;
         sound.total_len = sound.data.buffer.len;

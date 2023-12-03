@@ -24,7 +24,7 @@ var audio_len: usize = 0;
 var audio_pos: ?[]u8 = null;
 var audio: ?SDL.OpenAudioDeviceResult = null;
 
-var sound_engine: ?*sound.sound_manager = null;
+var sound_engine: ?*sound.SoundManager = null;
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub const MenuState = struct {
@@ -96,7 +96,7 @@ pub const MenuState = struct {
         }
 
         if (sound_engine == null) {
-            sound_engine = sound.sound_manager.init(gpa.allocator()) catch @panic("Sound engine could not init");
+            sound_engine = sound.SoundManager.init(gpa.allocator()) catch @panic("Sound engine could not init");
             sound_engine.?.start();
             const bg = sound_engine.?.loadSound("src/gamestates/menu_music.wav") catch @panic("Could not load sound");
             bg.play();
