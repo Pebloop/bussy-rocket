@@ -18,6 +18,7 @@ pub const AssetsList = struct {
 
     pub fn loadAssets(assetsList: *AssetsList, renderer: *SDL.Renderer) void {
         assetsList.images.bus.load(renderer);
+        assetsList.images.choco.load(renderer);
     }
 };
 
