@@ -6,6 +6,7 @@ const Image = @import("../asset_manager/image.zig").Image;
 const Sky = @import("../objects/sky.zig");
 const physics = @import("../managers/physics.zig");
 const root = @import("root");
+const gamestate_gameover = @import("./gamestate_gameover.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -136,6 +137,14 @@ pub const GameplayState = struct {
             self.elevation_speed += 0.01;
         }
         self.score = @max(self.score, @as(u32, @intFromFloat(self.bus.getHeight())));
+
+        if (self.bus.rigid_body.getPosition().x < -7) {
+            var next_state = gamestate_gameover.GameOverState.init(self.allocator) catch @panic("Allocation failed!");
+
+            return game_data.Trans{
+                .to = next_state.state(),
+            };
+        }
 
         self.bus.update(delta);
         physics.update(delta);
