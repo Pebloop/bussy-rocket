@@ -2,6 +2,7 @@ const game_data = @import("../game_data.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
 const gamestate_game = @import("./gamestate_game.zig");
+const sound = @import("../sound.zig");
 const Allocator = std.mem.Allocator;
 
 const bus_asset = @embedFile("../assets/images/bus.png");
@@ -16,6 +17,15 @@ var title_texture: ?SDL.Texture = null;
 var text_font: ?SDL.ttf.Font = null;
 var text_surface: ?SDL.Surface = null;
 var text_texture: ?SDL.Texture = null;
+
+var wav: ?SDL.Wav = null;
+var done = false;
+var audio_len: usize = 0;
+var audio_pos: ?[]u8 = null;
+var audio: ?SDL.OpenAudioDeviceResult = null;
+
+var sound_engine: ?*sound.SoundManager = null;
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 
 pub const MenuState = struct {
     const Self = @This();
@@ -84,6 +94,19 @@ pub const MenuState = struct {
                 std.log.err("Failed to create texture from surface: {}\n", .{err});
                 return;
             };
+        }
+
+        if (sound_engine == null) {
+            sound_engine = sound.SoundManager.init(gpa.allocator()) catch @panic("Sound engine could not init");
+            sound_engine.?.start();
+            const bg = sound_engine.?.loadSound("src/gamestates/menu_music.wav") catch @panic("Could not load sound");
+            bg.play();
+            const crickets = sound_engine.?.loadSound("src/gamestates/crickets.wav") catch @panic("Could not load crickets");
+            crickets.loop = true;
+            crickets.play();
+        }
+        if (audio) |true_audio| {
+            true_audio.device.pause(false);
         }
 
         renderer.copyEx(

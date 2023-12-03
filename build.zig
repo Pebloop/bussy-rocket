@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("sdl2_image");
     exe.linkSystemLibrary("chipmunk");
     exe.linkSystemLibrary("sdl2_ttf");
+    exe.linkSystemLibrary("sdl2_mixer");
 
     b.installArtifact(exe);
 
