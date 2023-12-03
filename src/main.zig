@@ -38,7 +38,14 @@ pub fn main() !void {
         .renderer = &renderer,
     };
 
+    var time_miliseconds = SDL.getTicks64();
+    var time: f64 = @floatFromInt(time_miliseconds);
     mainLoop: while (true) {
+        const ticks_miliseconds = SDL.getTicks64();
+        const ticks: f64 = @floatFromInt(ticks_miliseconds);
+        const delta = (ticks - time) / 1000.0;
+        time = ticks;
+
         var egg: ?game_data.Trans = null;
 
         while (SDL.pollEvent()) |ev| {
@@ -61,7 +68,7 @@ pub fn main() !void {
         try renderer.setColorRGB(0x00, 0x00, 0x00);
         try renderer.clear();
 
-        egg = gamedata.state.update();
+        egg = gamedata.state.update(delta);
 
         gamedata.state.draw(&renderer);
 

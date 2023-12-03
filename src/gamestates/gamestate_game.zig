@@ -28,7 +28,8 @@ pub const GameplayState = struct {
         return game_data.GameState.init(self);
     }
 
-    pub fn update(self: *Self) ?game_data.Trans {
+    pub fn update(self: *Self, delta: f64) ?game_data.Trans {
+        _ = delta;
         self.camera_elevation += @intFromFloat(self.elevation_speed);
         self.elevation_speed += 0.01;
         return null;

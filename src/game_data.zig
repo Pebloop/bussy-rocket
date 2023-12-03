@@ -12,7 +12,7 @@ pub const GameState = struct {
     const Self = @This();
 
     ptr: *anyopaque,
-    updateFn: *const fn (*anyopaque) ?Trans,
+    updateFn: *const fn (*anyopaque, delta: f64) ?Trans,
     drawFn: *const fn (*anyopaque, renderer: *SDL.Renderer) void,
     onEventFn: *const fn (*anyopaque, SDL.Event) ?Trans,
     deinitFn: *const fn (*anyopaque) void,
@@ -25,12 +25,12 @@ pub const GameState = struct {
         if (ptr_info.Pointer.size != .One) @compileError("ptr must be a single item pointer");
 
         const gen = struct {
-            pub fn updateImpl(pointer: *anyopaque) ?Trans {
+            pub fn updateImpl(pointer: *anyopaque, delta: f64) ?Trans {
                 const self = @as(Ptr, @ptrCast(@alignCast(pointer)));
                 return @call(
                     .always_inline,
                     ptr_info.Pointer.child.update,
-                    .{self},
+                    .{ self, delta },
                 );
             }
 
@@ -74,8 +74,8 @@ pub const GameState = struct {
         };
     }
 
-    pub inline fn update(self: Self) ?Trans {
-        return self.updateFn(self.ptr);
+    pub inline fn update(self: Self, delta: f64) ?Trans {
+        return self.updateFn(self.ptr, delta);
     }
 
     pub inline fn draw(self: Self, renderer: *SDL.Renderer) void {

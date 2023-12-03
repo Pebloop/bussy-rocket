@@ -31,7 +31,8 @@ pub const MenuState = struct {
         return game_data.GameState.init(self);
     }
 
-    pub fn update(self: *Self) ?game_data.Trans {
+    pub fn update(self: *Self, delta: f64) ?game_data.Trans {
+        _ = delta;
         _ = self;
         rotation += 1;
         return null;
