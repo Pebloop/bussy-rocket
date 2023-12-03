@@ -21,6 +21,7 @@ pub fn build(b: *std.Build) void {
     exe.addModule("sdl2", sdk.getWrapperModule());
     exe.linkSystemLibrary("sdl2_image");
     exe.linkSystemLibrary("chipmunk");
+    exe.linkSystemLibrary("sdl2_ttf");
 
     b.installArtifact(exe);
 
