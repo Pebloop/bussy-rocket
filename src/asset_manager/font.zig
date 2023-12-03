@@ -29,6 +29,10 @@ pub const Font = struct {
             std.log.err("Failed to copy texture: {}\n", .{err});
             return;
         };
+
+        surface.destroy();
+        texture.destroy();
+        fontspec.close();
     }
 };
 
