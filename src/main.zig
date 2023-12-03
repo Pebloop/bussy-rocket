@@ -1,7 +1,6 @@
 const std = @import("std");
 const SDL = @import("sdl2");
 const game_data = @import("game_data.zig");
-const ecs = @import("ecs.zig");
 const cm2d = @cImport({
     @cInclude("chipmunk/chipmunk.h");
 });
