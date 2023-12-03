@@ -1,4 +1,5 @@
 const Image = @import("./image.zig");
+const Font = @import("./font.zig");
 const SDL = @import("sdl2");
 const std = @import("std");
 
@@ -7,7 +8,7 @@ const ImagesList = struct {
 };
 
 const FontList = struct {
-    font: [:0]const u8 = @embedFile("../assets/fonts/Roboto-Black.ttf"),
+    font: Font.Font = Font.createFont(@embedFile("../assets/fonts/Roboto-Black.ttf")),
 };
 
 pub const AssetsList = struct {

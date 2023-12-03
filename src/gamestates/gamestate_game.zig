@@ -10,12 +10,16 @@ pub const GameplayState = struct {
     allocator: Allocator,
     busX: i32 = 0,
     busY: i32 = 0,
+    camera_elevation: i32 = 0,
+    elevation_speed: f32 = 0.01,
 
     pub fn init(alloc: Allocator) !*Self {
         var self = try alloc.create(Self);
         self.allocator = alloc;
         self.busX = 0;
         self.busY = 0;
+        self.camera_elevation = 0;
+        self.elevation_speed = 1;
         return self;
     }
 
@@ -24,17 +28,21 @@ pub const GameplayState = struct {
     }
 
     pub fn update(self: *Self) ?game_data.Trans {
-        _ = self;
+        self.camera_elevation += @intFromFloat(self.elevation_speed);
+        self.elevation_speed += 0.01;
         return null;
     }
 
     pub fn draw(self: *Self, renderer: *SDL.Renderer) void {
-        renderer.setColorRGB(0x00, 0x8E, 0x9B) catch |err| {
-            std.log.err("Could not set color: {}", .{err});
-            @panic("Could not set color");
+        // draw score
+        var height_text = [4:0]u8{ ' ', ' ', ' ', ' ' };
+        _ = std.fmt.bufPrint(&height_text, "{}", .{self.camera_elevation}) catch |err| {
+            std.log.err("Could not format height: {}", .{err});
+            @panic("Could not format height");
         };
+        assets.assets.fonts.font.draw(24, 100, 30, 0, 0, &height_text, renderer);
 
-        assets.assets.images.bus.draw(renderer, self.busX, self.busY);
+        assets.assets.images.bus.draw(renderer, self.busX, self.busY + self.camera_elevation);
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
