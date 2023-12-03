@@ -3,6 +3,7 @@ const SDL = @import("sdl2");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const assets = @import("../asset_manager/asset_list.zig");
+const gamestate_menu = @import("./gamestate_menu.zig");
 
 pub const GameOverState = struct {
     const Self = @This();
@@ -31,9 +32,21 @@ pub const GameOverState = struct {
     }
 
     pub fn onEvent(self: *Self, event: SDL.Event) ?game_data.Trans {
-        _ = event;
-        _ = self;
-        return null;
+        return switch (event) {
+            .key_down => |key| {
+                switch (key.keycode) {
+                    .a => {
+                        var next_state = gamestate_menu.MenuState.init(self.allocator) catch @panic("Allocation failed!");
+
+                        return game_data.Trans{
+                            .to = next_state.state(),
+                        };
+                    },
+                    else => return null,
+                }
+            },
+            else => return null,
+        };
     }
 
     pub fn deinit(self: *Self) void {

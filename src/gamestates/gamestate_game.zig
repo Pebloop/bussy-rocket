@@ -138,7 +138,7 @@ pub const GameplayState = struct {
         }
         self.score = @max(self.score, @as(u32, @intFromFloat(self.bus.getHeight())));
 
-        if (self.bus.rigid_body.getPosition().x < -7) {
+        if (self.bus.rigid_body.getPosition().x < -7 or self.bus.rigid_body.getPosition().x > 7) {
             var next_state = gamestate_gameover.GameOverState.init(self.allocator) catch @panic("Allocation failed!");
 
             return game_data.Trans{
