@@ -4,6 +4,7 @@ const std = @import("std");
 const assets = @import("../asset_manager/asset_list.zig");
 const Image = @import("../asset_manager/image.zig").Image;
 const Allocator = std.mem.Allocator;
+const Sky = @import("../objects/sky.zig");
 
 pub const GameplayState = struct {
     const Self = @This();
@@ -16,10 +17,10 @@ pub const GameplayState = struct {
     pub fn init(alloc: Allocator) !*Self {
         var self = try alloc.create(Self);
         self.allocator = alloc;
-        self.busX = 0;
-        self.busY = 0;
+        self.busX = 440;
+        self.busY = 570;
         self.camera_elevation = 0;
-        self.elevation_speed = 1;
+        self.elevation_speed = 0;
         return self;
     }
 
@@ -35,13 +36,17 @@ pub const GameplayState = struct {
 
     pub fn draw(self: *Self, renderer: *SDL.Renderer) void {
         // draw score
-        var height_text = [4:0]u8{ ' ', ' ', ' ', ' ' };
+        var height_text = [10:0]u8{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
         _ = std.fmt.bufPrint(&height_text, "{}", .{self.camera_elevation}) catch |err| {
             std.log.err("Could not format height: {}", .{err});
             @panic("Could not format height");
         };
-        assets.assets.fonts.font.draw(24, 100, 30, 0, 0, &height_text, renderer);
 
+        Sky.drawSky(renderer, self.camera_elevation) catch |err| {
+            std.log.err("Could not draw sky: {}", .{err});
+            @panic("Could not draw sky");
+        };
+        assets.assets.fonts.font.draw(24, 100, 30, 0, 0, &height_text, renderer);
         assets.assets.images.bus.draw(renderer, self.busX, self.busY + self.camera_elevation);
     }
 
@@ -62,7 +67,8 @@ pub const GameplayState = struct {
                         return null;
                     },
                     .down => {
-                        self.busY += 10;
+                        if (self.busY < 570)
+                            self.busY += 10;
                         return null;
                     },
                     else => return null,

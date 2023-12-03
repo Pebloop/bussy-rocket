@@ -88,7 +88,7 @@ pub const MenuState = struct {
         renderer.copyEx(
             bus_texture.?,
             SDL.Rectangle{
-                .x = 540 - 100,
+                .x = 440,
                 .y = 340,
                 .width = 200,
                 .height = 100,
