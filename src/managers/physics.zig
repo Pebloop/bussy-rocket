@@ -41,8 +41,9 @@ const Shape = struct {
 
     ptr: *c.cpShape,
 
-    pub fn setFriction(self: Self, f: f32) void {
+    pub fn setFriction(self: Self, f: f32) Shape {
         c.cpShapeSetFriction(self.ptr, f);
+        return self;
     }
 };
 
@@ -104,6 +105,27 @@ const Shapes = struct {
                 self.body,
                 width,
                 height,
+                radius,
+            ) orelse @panic("oups"),
+        };
+
+        _ = c.cpSpaceAddShape(space.?, shape.ptr);
+
+        return shape;
+    }
+
+    pub fn addBox2(
+        self: *Self,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        radius: f32,
+    ) Shape {
+        const shape = Shape{
+            .ptr = c.cpBoxShapeNew2(
+                self.body,
+                c.cpBBNew(x - width / 2.0, y - height / 2.0, x + width, y + height),
                 radius,
             ) orelse @panic("oups"),
         };

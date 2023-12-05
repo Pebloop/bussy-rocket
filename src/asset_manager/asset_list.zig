@@ -4,7 +4,7 @@ const SDL = @import("sdl2");
 const std = @import("std");
 
 const ImagesList = struct {
-    bus: Image.Image = Image.createImage(@embedFile("../assets/images/bus.png"), 200, 100),
+    bus: Image.Image = Image.createImage(@embedFile("../assets/images/bus.png"), 128, 64),
     choco: Image.Image = Image.createImage(@embedFile("../assets/images/choco.png"), 64, 64),
 };
 

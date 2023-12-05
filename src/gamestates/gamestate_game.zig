@@ -9,7 +9,7 @@ const root = @import("root");
 
 const Allocator = std.mem.Allocator;
 
-const physics_to_pixels_ratio = 100.0; // 100 px = 1 physics engine unit
+const physics_to_pixels_ratio = 10.0; // 100 px = 1 physics engine unit
 const camera_follows_bus = true;
 
 const Bus = struct {
@@ -21,16 +21,36 @@ const Bus = struct {
 
     pub fn init(allocator: Allocator) Self {
         var self = Self{
-            .rigid_body = physics.Body.initRigid(allocator, 1, 2),
+            .rigid_body = physics.Body.initRigid(allocator, 1, 5),
         };
 
-        self.rigid_body.shapes.addBox(
-            (180.0 / physics_to_pixels_ratio),
-            (100.0 / physics_to_pixels_ratio),
+        _ = self.rigid_body.shapes.addBox2(
+            0,
+            0.0 / physics_to_pixels_ratio,
+            (50.0 / physics_to_pixels_ratio),
+            (20.0 / physics_to_pixels_ratio),
+            // (56.0 / physics_to_pixels_ratio),
+            // (20.0 / physics_to_pixels_ratio),
             0,
         ).setFriction(1);
 
-        self.rigid_body.setPosition(0, 2);
+        // _ = self.rigid_body.shapes.addBox2(
+        //     -36.0 / physics_to_pixels_ratio,
+        //     -24.0 / physics_to_pixels_ratio,
+        //     (16.0 / physics_to_pixels_ratio),
+        //     (16.0 / physics_to_pixels_ratio),
+        //     0,
+        // ).setFriction(0);
+
+        // _ = self.rigid_body.shapes.addBox2(
+        //     40.0 / physics_to_pixels_ratio,
+        //     -24.0 / physics_to_pixels_ratio,
+        //     (16.0 / physics_to_pixels_ratio),
+        //     (16.0 / physics_to_pixels_ratio),
+        //     0,
+        // ).setFriction(0);
+
+        self.rigid_body.setPosition(0, 20);
 
         return self;
     }
@@ -50,8 +70,8 @@ const Bus = struct {
             self.rigid_body.applyForceAt(
                 0,
                 10,
-                -80.0 / physics_to_pixels_ratio,
-                50.0 / physics_to_pixels_ratio,
+                -40.0 / physics_to_pixels_ratio,
+                20.0 / physics_to_pixels_ratio,
             );
         }
 
@@ -59,8 +79,8 @@ const Bus = struct {
             self.rigid_body.applyForceAt(
                 0,
                 10,
-                80.0 / physics_to_pixels_ratio,
-                50.0 / physics_to_pixels_ratio,
+                40.0 / physics_to_pixels_ratio,
+                20.0 / physics_to_pixels_ratio,
             );
         }
     }
@@ -69,10 +89,13 @@ const Bus = struct {
         const pos = self.rigid_body.getPosition();
         const angle = self.rigid_body.getAngle();
 
+        const w: f32 = @floatFromInt(assets.assets.images.bus.width);
+        const h: f32 = @floatFromInt(assets.assets.images.bus.height);
+
         assets.assets.images.bus.drawExt(
             renderer,
-            @intFromFloat(root.width / 2 - camx + pos.x * physics_to_pixels_ratio - 100),
-            @intFromFloat(root.height - camy - pos.y * physics_to_pixels_ratio - 50),
+            @intFromFloat(root.width / 2 - camx + pos.x * physics_to_pixels_ratio - w / 2.0),
+            @intFromFloat(root.height - camy - pos.y * physics_to_pixels_ratio - h / 2.0),
             angle,
         );
     }
@@ -88,7 +111,7 @@ const Ground = struct {
             .static_body = physics.Body.initStatic(allocator),
         };
 
-        self.static_body.shapes.addSegment(
+        _ = self.static_body.shapes.addSegment(
             -100,
             100.0 / physics_to_pixels_ratio,
             100,
@@ -96,8 +119,8 @@ const Ground = struct {
             0,
         ).setFriction(1);
 
-        self.static_body.shapes.addSegment(-5, 0, -5, 1000, 0).setFriction(1);
-        self.static_body.shapes.addSegment(5, 0, 5, 1000, 0).setFriction(1);
+        _ = self.static_body.shapes.addSegment(-50, 0, -50, 10000, 0).setFriction(1);
+        _ = self.static_body.shapes.addSegment(50, 0, 50, 10000, 0).setFriction(1);
 
         return self;
     }
@@ -136,10 +159,13 @@ pub const Choco = struct {
         const pos = self.static_body.getPosition();
         const angle = self.static_body.getAngle();
 
+        const w = @as(f32, @floatFromInt(assets.assets.images.choco.width));
+        const h = @as(f32, @floatFromInt(assets.assets.images.choco.height));
+
         assets.assets.images.choco.drawExt(
             renderer,
-            @intFromFloat(root.width / 2 - camx + pos.x * physics_to_pixels_ratio - 32),
-            @intFromFloat(root.height - camy - pos.y * physics_to_pixels_ratio - 32),
+            @intFromFloat(root.width / 2 - camx + pos.x * physics_to_pixels_ratio - w / 2),
+            @intFromFloat(root.height - camy - pos.y * physics_to_pixels_ratio - h / 2),
             angle,
         );
     }
@@ -167,7 +193,7 @@ pub const GameplayState = struct {
         self.ground = Ground.init(alloc);
         self.bus = Bus.init(alloc);
         self.chocos = std.ArrayList(Choco).init(alloc);
-        self.generated_choco_altitude = 3;
+        self.generated_choco_altitude = 50;
         self.camera_elevation = 0;
         self.elevation_speed = 0;
         self.score = 0;
@@ -193,15 +219,15 @@ pub const GameplayState = struct {
         const current_alt = self.bus.getAltitude();
 
         // create chocos
-        const min_generated_choco_altitude = current_alt + 20.0;
+        const min_generated_choco_altitude = current_alt + 100.0;
 
         if (min_generated_choco_altitude > self.generated_choco_altitude) {
             const delta_alt = min_generated_choco_altitude - self.generated_choco_altitude;
-            const choco_count: u64 = @intFromFloat(delta_alt / 2);
+            const choco_count: u64 = @intFromFloat(delta_alt / 20);
 
             if (choco_count > 0) {
                 for (0..choco_count) |i| {
-                    const x = self.rand.random().float(f32) * 10 - 5;
+                    const x = self.rand.random().float(f32) * 100 - 50;
                     const y = (@as(f32, @floatFromInt(i)) / @as(f32, @floatFromInt(choco_count))) * delta_alt + self.generated_choco_altitude;
                     const choco = Choco.init(self.allocator, x, y);
 
