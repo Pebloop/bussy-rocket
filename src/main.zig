@@ -1,9 +1,6 @@
 const std = @import("std");
 const SDL = @import("sdl2");
 const game_data = @import("game_data.zig");
-const cm2d = @cImport({
-    @cInclude("chipmunk/chipmunk.h");
-});
 const physics = @import("managers/physics.zig");
 
 const gamestate_menu = @import("gamestates/gamestate_menu.zig");
